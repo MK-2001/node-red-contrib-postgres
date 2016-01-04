@@ -9,6 +9,10 @@ Run the following command in the root directory of your Node-RED install
 
     npm install node-red-contrib-postgres
 
+
+Overview
+-------
+
 This add-on, includes a suite of nodes to work with Postgres :
 
 - PG Connection
@@ -18,7 +22,7 @@ This add-on, includes a suite of nodes to work with Postgres :
 
 The first node accepts a string that represents the query to be executed.
 
-The last 3 nodes accept an Object and outputs a postgres query that can be used with the PG Connection node.
+The last 3 nodes accept an Object and outputs a Postgres query that can be used with the PG Connection node.
 
 ## PG Connection
 
@@ -42,7 +46,7 @@ Like the PG Insert, this node has the parameters table name and accepted column.
    "payload" : {
        "foo" : 1,
        "bar" : "xD",
-       "test": 2 
+       "test": 2
    },
    "where" : {
        "foo" : 4
