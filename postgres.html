@@ -1,0 +1,439 @@
+<!--
+  Copyright 2013 Kris Daniels.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="postgresdb">
+    <div class="form-row">
+        <label for="node-config-input-hostname"><i class="fa fa-bookmark"></i> Host</label>
+        <input class="input-append-left" type="text" id="node-config-input-hostname" placeholder="localhost" style="width: 40%;" >
+        <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
+        <input type="text" id="node-config-input-port" placeholder="5432" style="width:45px">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-db"><i class="fa fa-briefcase"></i> Database</label>
+        <input type="text" id="node-config-input-db" placeholder="test">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-user"><i class="fa fa-user"></i> Username</label>
+        <input type="text" id="node-config-input-user" placeholder="postgres">
+        <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+        <input type="password" id="node-config-input-password" placeholder="postgres">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-config-input-ssl" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-config-input-ssl" style="width: 70%;">Use SSL</label>
+    </div>
+</script>
+
+<script type="text/javascript">
+    (function() {
+            RED.nodes.registerType('postgresdb',{
+            category: 'config',
+            color:"rgb(218, 196, 180)",
+            defaults: {
+                hostname: { value:"localhost",required:true},
+                port: { value: 5432,required:true},
+                db: { value:"postgres",required:true},
+                ssl: { value:false }
+            },
+            credentials: {
+                user: {type: "text"},
+                password: {type: "password"}
+            },
+            label: function() {
+                return this.name||this.hostname+":"+this.port+"/"+this.db;
+            }
+        });
+    })();
+</script>
+
+<script type="text/x-red" data-template-name="PG Connection">
+	 <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-postgresdb"><i class="fa fa-tag"></i> Server</label>
+        <input type="text" id="node-input-postgresdb">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-output" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-output" style="width: 70%;">Receive query output ?</label>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="PG Connection">
+    <p>A PostgreSql I/O node. </p>
+    <p>Executes the query specified in msg.payload with optional query parameters in msg.queryParameters</p>
+    <p>The queryParameters in the query must be specified as $propertyname</p>
+    <p>See the node-postgres-named package for more info</p>
+    <p>When receiving data from the query, the msg.payload on the output will be a json array of the returned records</p>
+
+</script>
+
+<script type="text/javascript">
+    (function() {
+		RED.nodes.registerType('PG Connection',{
+			category: 'storage-output',
+			color:"rgb(148, 226, 252)",
+			defaults: {
+				postgresdb: { type:"postgresdb",required:true},
+				name: {value:""},
+				output: {value:false},
+				outputs: {value:0}
+			},
+			inputs: 1,
+			outputs: 0,
+			icon: "postgres.png",
+			align: "right",
+			label: function() {
+				return this.name||(this.sqlquery?this.sqlquery:"postgres");
+			},
+			labelStyle: function() {
+				return this.name?"node_label_italic":"";
+			},
+			oneditprepare: function() {
+
+				$( "#node-input-output" ).prop( "checked", this.output );
+				$("#node-input-name").focus();
+
+			},
+			oneditsave: function() {
+
+				var hasOutput = $( "#node-input-output" ).prop( "checked" );
+				this.outputs = hasOutput ? 1:0;
+
+			}
+		});
+    })();
+</script>
+
+<!--
+  Copyright 2015 Red Connect.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="postgresarray">
+    <div class="form-row">
+        <label style="vertical-align: top;"><i class="fa fa-tag"></i> Accepted Columns</label>
+        <div style="width:calc( 70% + 2em);display:inline-block">
+            <div id="postgres-array-columns">
+                <h4 class="muted" id="postgres-array-columns-any">Any</h4>
+            </div>
+            <div>
+                <input type="text" id="postgres-array-add-column-text" placeholder="Column Name" style="width:calc( 100% - 5em)"/>
+                <a class="editor-button fa fa-plus" id="postgres-array-add-column"></a>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="node-config-input-columns" value="[]" />
+</script>
+
+<script type="text/javascript">
+    (function() {
+        function _removeColumn(columnName,cols,columnElement) {
+            return function () {
+                $(columnElement).remove();
+                var columnIndex = cols.indexOf(columnName);
+                if (columnIndex !== -1) {
+                    cols.splice(columnIndex,1);
+                }
+                if (cols.length === 0) {
+                    $('#postgres-array-columns-any').show();
+                }
+                $('#node-config-input-columns').val(JSON.stringify(cols));
+            }
+        }
+        function _addColumnElement(columnName,cols) {
+            var columnElement =
+                    $('<div class="label label-info" style="margin : .1em .3em;" />')
+                        .append($('<span style="margin: 0.2em; font-size: 1.3em;line-height: 1.3em;" />').text(columnName));
+            columnElement.append($('<a class="btn btn-danger fa fa-times" style="padding:.2em .3em;margin: -.3em .1em .2em .1em;"/>')
+                .click(_removeColumn(columnName,cols,columnElement)));
+            $('#postgres-array-columns').append(columnElement);
+        }
+		RED.nodes.registerType('postgresarray',{
+			category: 'config',
+			color:"rgb(148, 226, 252)",
+			defaults: {
+				columns: { value: "[]"  }
+			},
+            columns: "[]",
+			label: function() {
+                var cols = JSON.parse(this.columns);
+				return cols.length ? cols.join() : '*';
+			},
+			oneditprepare: function() {
+                var node=this;
+                node._columns = JSON.parse(this.columns);
+                if (node._columns.length > 0) {
+                    $('#postgres-array-columns-any').hide();
+                    for (var i=0,l=node._columns.length;i<l;i++) {
+                        _addColumnElement(node._columns[i],node._columns);
+                    }
+                }
+                $("#postgres-array-add-column").click(function () {
+                    var columnName = $('#postgres-array-add-column-text').val().toLowerCase().trim();
+                    if (node._columns.length === 0) {
+                        $('#postgres-array-columns-any').hide();
+                    }
+                    //Check if already exists
+                    if ((columnName.length > 0) && (node._columns.indexOf(columnName) === -1)) {
+                        $('#postgres-array-add-column-text').val('');
+                        _addColumnElement(columnName,node._columns);
+                        node._columns.push(columnName);
+                        $('#node-config-input-columns').val(JSON.stringify(node._columns));
+                    }
+                });
+                $('#node-config-input-columns').val(JSON.stringify(node._columns));
+            }
+		});
+    })();
+</script>
+
+<script type="text/x-red" data-template-name="PG Insert">
+    <div class="form-row">
+       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+       <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+       <label for="node-input-table"><i class="fa fa-tag"></i> Table name</label>
+       <input type="text" id="node-input-table" placeholder="Table name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-name" style="vertical-align: top;"><i class="fa fa-tag"></i> Accepted Columns</label>
+        <input type="text" id="node-input-columns">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-require-all" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-require-all" style="width: 70%;">All columns required ?</label>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="PG Insert">
+    <p>A PostgreSql I/O insert node. </p>
+    <p>Transform the object in msg.payload to a insert query</p>
+    <p>You can filter which columns take from the input using the Accepted Columns field, or leave it blank to accept everything</p>
+
+</script>
+
+<script type="text/javascript">
+    (function() {
+		RED.nodes.registerType('PG Insert',{
+			category: 'storage-output',
+			color:"rgb(148, 226, 252)",
+			defaults: {
+                name: { value:"" },
+                table: { value:"", required : true },
+				columns: { type:"postgresarray"  },
+                requireAll: { value: false }
+			},
+			inputs: 1,
+			outputs: 1,
+			icon: "arrow-in.png",
+			label: function() {
+				return this.name||("insert on "+this.table);
+			},
+			labelStyle: function() {
+				return this.name?"node_label_italic":"";
+			},
+			oneditprepare: function() {
+                $("#node-input-require-all").prop("checked", this.requireAll);
+				$("#node-input-name").focus();
+            },
+			oneditsave: function() {
+				this.requireAll = $( "#node-input-require-all" ).prop( "checked" ) + 0;
+			}
+		});
+    })();
+</script>
+
+<script type="text/x-red" data-template-name="PG Update">
+    <div class="form-row">
+       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+       <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+       <label for="node-input-table"><i class="fa fa-tag"></i> Table name</label>
+       <input type="text" id="node-input-table" placeholder="Table name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-columns" style="vertical-align: top;"><i class="fa fa-tag"></i> Accepted Columns</label>
+        <input type="text" id="node-input-columns">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-require-all" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-require-all" style="width: 70%;">All columns required ?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-where" style="vertical-align: top;"><i class="fa fa-tag"></i> Where Columns</label>
+        <input type="text" id="node-input-where">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-require-all" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-require-all-where" style="width: 70%;">All columns required ?</label>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="PG Update">
+    <p>A PostgreSql I/O update node. </p>
+    <p>Transform the object in msg.payload to a update query</p>
+    <p>You can filter which columns take from the input using the Accepted Columns field, or leave it blank to accept everything</p>
+    <p>You can optionally add an object in msg.where for make the where clausey</p>
+
+</script>
+
+<script type="text/javascript">
+    (function() {
+		RED.nodes.registerType('PG Update',{
+			category: 'storage-output',
+			color:"rgb(148, 226, 252)",
+			defaults: {
+                name: { value:"" },
+                table: { value:"", required : true },
+				columns: { type:"postgresarray"  },
+				where: { type:"postgresarray"  },
+                requireAll: { value: false },
+                requireAllWhere: { value: false }
+			},
+			inputs: 1,
+			outputs: 1,
+			icon: "arrow-in.png",
+			label: function() {
+				return this.name||("update on "+this.table);
+			},
+			labelStyle: function() {
+				return this.name?"node_label_italic":"";
+			},
+			oneditprepare: function() {
+                $("#node-input-require-all").prop("checked", this.requireAll);
+                $("#node-input-require-all-where").prop("checked", this.requireAllWhere);
+				$("#node-input-name").focus();
+            },
+			oneditsave: function() {
+				this.requireAll = $( "#node-input-require-all" ).prop( "checked" ) + 0;
+				this.requireAllWhere = $( "#node-input-require-all-where" ).prop( "checked" ) + 0;
+			}
+		});
+    })();
+</script>
+
+<script type="text/x-red" data-template-name="PG Select">
+    <div class="form-row">
+       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+       <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+       <label for="node-input-table"><i class="fa fa-tag"></i> Table name</label>
+       <input type="text" id="node-input-table" placeholder="Table name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-columns" style="vertical-align: top;"><i class="fa fa-tag"></i> Columns</label>
+        <input type="text" id="node-input-columns">
+    </div>
+    <div class="form-row">
+        <label for="node-input-where" style="vertical-align: top;"><i class="fa fa-tag"></i> Where Columns</label>
+        <input type="text" id="node-input-where">
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-require-all" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-require-all" style="width: 70%;">All columns required ?</label>
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-no-where" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-no-where" style="width: 70%;">Ignore the where clause ?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-group" style="vertical-align: top;"><i class="fa fa-tag"></i> Group by</label>
+        <input type="text" id="node-input-group">
+    </div>
+    <div class="form-row">
+        <label for="node-input-order" style="vertical-align: top;"><i class="fa fa-tag"></i> Order by</label>
+        <input type="text" id="node-input-order">
+    </div>
+    <div class="form-row">
+       <label for="node-input-limit"><i class="fa fa-tag"></i> Limit</label>
+       <input type="text" id="node-input-limit" placeholder="Limit">
+    </div>
+    <div class="form-row">
+       <label for="node-input-offset"><i class="fa fa-tag"></i> Offset</label>
+       <input type="text" id="node-input-offset" placeholder="Offset">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="PG Select">
+    <p>A PostgreSql I/O select node. </p>
+    <p>Build a select query using the msg.payload as where clause</p>
+
+    <p></p>
+    <p>Optionally you can use msg.limit for the limit (if is setted 0 on the settings of the node)</p>
+    <p>and msg.offset for the offset (if is setted 0 on the settings of the node)</p>
+
+</script>
+
+<script type="text/javascript">
+    (function() {
+		RED.nodes.registerType('PG Select',{
+			category: 'storage-output',
+			color:"rgb(148, 226, 252)",
+			defaults: {
+                name: { value:"" },
+                table: { value:"", required : true },
+                limit: { value:"0", validate:RED.validators.number() },
+                offset: { value:"0", validate:RED.validators.number() },
+				columns: { type:"postgresarray"  },
+				where: { type:"postgresarray"  },
+				group: { type:"postgresarray"  },
+				order: { type:"postgresarray"  },
+                requireAll: { value: false },
+                noWhere: { value: false }
+			},
+			inputs: 1,
+			outputs: 1,
+			icon: "arrow-in.png",
+			label: function() {
+				return this.name||("select on "+this.table);
+			},
+			labelStyle: function() {
+				return this.name?"node_label_italic":"";
+			},
+			oneditprepare: function() {
+                $("#node-input-require-all").prop("checked", this.requireAll);
+                $("#node-input-no-where").prop("checked", this.noWhere);
+				$("#node-input-name").focus();
+            },
+			oneditsave: function() {
+				this.requireAll = $( "#node-input-require-all" ).prop( "checked" ) + 0;
+				this.noWhere = $( "#node-input-no-where" ).prop( "checked" ) + 0;
+			}
+		});
+    })();
+</script>
