@@ -67,6 +67,7 @@
         this.port = n.port;
         this.db = n.db;
         this.ssl = n.ssl;
+        this.connectionString = n.connectionstring;
 
     	var credentials = this.credentials;
     	if (credentials) {
@@ -109,14 +110,22 @@
         if(this.postgresConfig) {
 
     		node.on('input', function(msg){
-                pg.connect({
-                    user        :  node.postgresConfig.user,
-                    password    :  node.postgresConfig.password,
-                    host        :  node.postgresConfig.hostname,
-                    port        :  node.postgresConfig.port,
-                    database    :  node.postgresConfig.db,
-                    ssl         :  node.postgresConfig.ssl
-                }, function(err, client, done) {
+                
+                var connectionString;
+
+                if (!node.postgresConfig.connectionString || node.postgresConfig.connectionString === "")
+                {
+                    connectionString = "postgres://" 
+                        + node.postgresConfig.user + ":" 
+                        + node.postgresConfig.password + "@"
+                        + node.postgresConfig.hostname + "/"
+                        + node.postgresConfig.db;
+                } else {
+                    connectionString = node.postgresConfig.connectionString;
+                }
+
+                var client = new pg.Client(connectionString);
+                client.connect( function(err, client, done) {
                     if(err) {
                         err.connectionString = conString;
                         err.queryParameters = msg.queryParameters;
