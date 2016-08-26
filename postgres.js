@@ -111,52 +111,65 @@
 
     		node.on('input', function(msg){
                 
-                var parseConfig = require('pg-connection-string').parse; //parses a connection string
-                
-                var config = {};
-                
-                if (node.postgresConfig.connectionString) { config = parseConfig(node.postgresConfig.connectionString); }
-                if (node.postgresConfig.user) { config.user = node.postgresConfig.user; }
-                if (node.postgresConfig.password) { config.password = node.postgresConfig.password; }
-                if (node.postgresConfig.hostname) { config.host = node.postgresConfig.hostname; }
-                if (node.postgresConfig.port) { config.port = node.postgresConfig.port; }
-                if (node.postgresConfig.db) { config.database = node.postgresConfig.db; }
-                config.ssl = node.postgresConfig.ssl;
+                try {
+                    var parseConfig = require('pg-connection-string').parse; //parses a connection string
+                    
+                    var config = {};
+                    
+                    if (node.postgresConfig.connectionString) { config = parseConfig(node.postgresConfig.connectionString); }
+                    if (node.postgresConfig.user) { config.user = node.postgresConfig.user; }
+                    if (node.postgresConfig.password) { config.password = node.postgresConfig.password; }
+                    if (node.postgresConfig.hostname) { config.host = node.postgresConfig.hostname; }
+                    if (node.postgresConfig.port) { config.port = node.postgresConfig.port; }
+                    if (node.postgresConfig.db) { config.database = node.postgresConfig.db; }
+                    config.ssl = node.postgresConfig.ssl;
 
-                pg.connect( config, function(err, client, done) {
-                    if(err) {
-                        err.queryParameters = msg.queryParameters;
-                        console.log(err);
-                        node.error(err);
-                    } else {
-                        named.patch(client);
-        				if(!msg.queryParameters) msg.queryParameters={};
-        				client.query(
-                            msg.payload,
-        					msg.queryParameters,
-        					function (err, results) {
-                                done();
-        					    if(err) {
-                                    node.error(err);
-                                }
-        						else {
-        						   if(node.output) {
-        								msg.payload = results.rows;
-        								node.send(msg);
-        							}
-        					    }
-        					}
-                        );
-                    }
-                });
-    		});
-    	} else {
+                    pg.connect( config, function(err, client, done) {
+
+                        try {
+                            
+                            if(err) {
+                                err.queryParameters = msg.queryParameters;
+                                console.log(err);
+                                node.error(err);
+                            } else {
+                                named.patch(client);
+                                if(!msg.queryParameters) msg.queryParameters={};
+                                
+                                client.query(
+                                    msg.payload,
+                                    msg.queryParameters,
+                                    function (err, results) {
+                                        done();
+                                        if(err) {
+                                            node.error(err);
+                                        }
+                                        else {
+                                        if(node.output) {
+                                                msg.payload = results.rows;
+                                                node.send(msg);
+                                            }
+                                        }
+                                    }
+                                );
+                            }
+                        } catch (error) {
+                            node.error(error, msg);
+                        }
+                    });
+
+                } catch (err) {
+                    node.error(err,msg);
+                }
+            });
+        } else {
             this.error("missing postgres configuration");
         }
 
         this.on("close", function() {
             if(node.clientdb) node.clientdb.end();
         });
+
     }
 
     function _prepareColumns(payload,columns) {
