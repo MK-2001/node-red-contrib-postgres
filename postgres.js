@@ -112,21 +112,19 @@
     		node.on('input', function(msg){
                 
                 try {
-                    var parseConfig = require('pg-connection-string').parse; //parses a connection string
-                    
                     var config = {};
                     
-                    if (node.postgresConfig.connectionString) { config = parseConfig(node.postgresConfig.connectionString); }
-                    if (node.postgresConfig.user) { config.user = node.postgresConfig.user; }
-                    if (node.postgresConfig.password) { config.password = node.postgresConfig.password; }
-                    if (node.postgresConfig.hostname) { config.host = node.postgresConfig.hostname; }
-                    if (node.postgresConfig.port) { config.port = node.postgresConfig.port; }
-                    if (node.postgresConfig.db) { config.database = node.postgresConfig.db; }
-
-                    if (!config.hasOwnProperty('ssl')) {
+                    if (node.postgresConfig.connectionString) { 
+                      config = node.postgresConfig.connectionString 
+                    } else {
+                      if (node.postgresConfig.user) { config.user = node.postgresConfig.user; }
+                      if (node.postgresConfig.password) { config.password = node.postgresConfig.password; }
+                      if (node.postgresConfig.hostname) { config.host = node.postgresConfig.hostname; }
+                      if (node.postgresConfig.port) { config.port = node.postgresConfig.port; }
+                      if (node.postgresConfig.db) { config.database = node.postgresConfig.db; }
                       config.ssl = node.postgresConfig.ssl;
                     }
-                    
+
                     pg.connect( config, function(err, client, done) {
 
                         try {
