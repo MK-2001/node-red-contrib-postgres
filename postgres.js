@@ -122,8 +122,11 @@
                     if (node.postgresConfig.hostname) { config.host = node.postgresConfig.hostname; }
                     if (node.postgresConfig.port) { config.port = node.postgresConfig.port; }
                     if (node.postgresConfig.db) { config.database = node.postgresConfig.db; }
-                    config.ssl = node.postgresConfig.ssl;
 
+                    if (!config.hasOwnProperty('ssl')) {
+                      config.ssl = node.postgresConfig.ssl;
+                    }
+                    
                     pg.connect( config, function(err, client, done) {
 
                         try {
