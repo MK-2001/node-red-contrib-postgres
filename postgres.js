@@ -214,9 +214,10 @@
                 if ( !node.requireAll || (node.columns.length === Object.keys(cols).length ) ) {
                     //Build query
                     var query = pgBuilder(node.table).insert(cols).toString();
-                    node.send({
-                        payload : query
-                    });
+                    // Save old Payload State
+                    msg.oldPayload = msg.payload;
+                    msg.payload = query;
+                    node.send(msg);
                 } else {
                     node.error("One or more columns are missing");
                 }
@@ -253,9 +254,10 @@
                         if (Object.keys(where).length) {
                             query = query.where(where);
                         }
-                        node.send({
-                            payload : query.toString()
-                        });
+                        // Save old Payload
+                        msg.oldPayload = msg.payload;
+                        msg.payload = query.toString();
+                        node.send(msg);
                     }
                 } else {
                     node.error("One or more columns are missing");
@@ -276,6 +278,7 @@
         this.where = RED.nodes.getNode(n.where).columns;
         this.group = RED.nodes.getNode(n.group).columns;
         this.order = RED.nodes.getNode(n.order).columns;
+        this.orderRaw = n.orderRaw;
         this.table = n.table;
         this.noWhere = n.noWhere;
         this.limit = n.limit || 0;
@@ -312,8 +315,10 @@
                     if (group.length) {
                         query = query.groupBy(group);
                     }
-
-                    if (order.length) {
+                    // Use an RAW Order by Message first.
+                    if (this.orderRaw.length) {
+                        query = query.orderByRaw(this.orderRaw);
+                    } else if (order.length) {
                         query = query.orderBy(order);
                     }
 
