@@ -1,6 +1,6 @@
 {
   "name": "MK-2001/node-red-contrib-postgres",
-  "version": "0.6.3",
+  "version": "0.6.2",
   "description": "A Node-RED node to query PostgreSql",
   "dependencies": {
     "pg": "^6.1.5",
