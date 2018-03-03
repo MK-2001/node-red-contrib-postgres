@@ -1,13 +1,12 @@
 {
-  "name": "@redant/node-red-contrib-postgres",
-  "version": "0.6.2",
+  "name": "MK-2001/node-red-contrib-postgres",
+  "version": "0.6.3",
   "description": "A Node-RED node to query PostgreSql",
   "dependencies": {
-    "pg": "3.5.0",
-    "node-postgres-named": "2.2.0",
-    "querystring": "0.2.0",
-    "knex": "0.9.0",
-    "pg-connection-string": "0.1.3"
+    "pg": "^6.1.5",
+    "node-postgres-named": "^2.4.1",
+    "querystring": "^0.2.0",
+    "knex": "^0.14.4"
   },
   "repository": {
     "type": "git",
