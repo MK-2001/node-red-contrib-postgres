@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/redconnect-io/node-red-contrib-postgres/"
+    "url": "https://github.com/MK-2001/node-red-contrib-postgres/"
   },
   "license": "Apache",
   "keywords": [
