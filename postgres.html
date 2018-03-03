@@ -384,6 +384,10 @@
         <input type="text" id="node-input-group">
     </div>
     <div class="form-row">
+        <label for="node-input-order" style="vertical-align: top;"><i class="fa fa-tag"></i> Order by (RAW) </label>
+        <input type="text" id="node-input-orderRaw">
+    </div>
+    <div class="form-row">
         <label for="node-input-order" style="vertical-align: top;"><i class="fa fa-tag"></i> Order by</label>
         <input type="text" id="node-input-order">
     </div>
@@ -404,7 +408,8 @@
     <p></p>
     <p>Optionally you can use msg.limit for the limit (if is setted 0 on the settings of the node)</p>
     <p>and msg.offset for the offset (if is setted 0 on the settings of the node)</p>
-
+    <h5>Order Raw / Order:</h5>
+    <p>You can use the Order Raw Field to write e.g. a function directy into the Order Statement. See here: <a href="http://knexjs.org/#Builder-orderByRaw">OrderByRaw</a></p>
 </script>
 
 <script type="text/javascript">
