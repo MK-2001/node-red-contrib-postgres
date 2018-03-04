@@ -1,5 +1,5 @@
 {
-  "name": "MK-2001/node-red-contrib-postgres",
+  "name": "node-red-contrib-postgres",
   "version": "0.6.2",
   "description": "A Node-RED node to query PostgreSql",
   "dependencies": {
@@ -7,7 +7,7 @@
     "node-postgres-named": "^2.4.0",
     "querystring": "^0.2.0",
     "knex": "^0.14.4",
-    "pg-connection-string": "^0.2.0"
+    "pg-connection-string": "^2.0.0"
   },
   "repository": {
     "type": "git",
