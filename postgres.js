@@ -325,10 +325,9 @@
                     if (Object.keys(where).length > 0) {
                         query = query.where(where);
                     }
-
-                    node.send({
-                        payload : query.offset(offset).toString()
-                    });
+                    msg.oldPayload = msg.payload;
+                    msg.payload = query.offset(offset).toString();
+                    node.send(msg);
                 } else {
                     node.error("One or more columns are missing");
                 }
