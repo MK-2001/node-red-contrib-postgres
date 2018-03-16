@@ -384,7 +384,12 @@
         <input type="text" id="node-input-group">
     </div>
     <div class="form-row">
-        <label for="node-input-order" style="vertical-align: top;"><i class="fa fa-tag"></i> Order by (RAW) </label>
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-orderRawActive" placeholder="once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-orderRawActive" style="width: 70%;">Activate OrderBy RAW ?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-orderRaw" style="vertical-align: top;"><i class="fa fa-tag"></i> Order by (RAW) </label>
         <input type="text" id="node-input-orderRaw">
     </div>
     <div class="form-row">
@@ -418,16 +423,18 @@
 			category: 'storage-output',
 			color:"rgb(148, 226, 252)",
 			defaults: {
-                name: { value:"" },
-                table: { value:"", required : true },
-                limit: { value:"0", validate:RED.validators.number() },
-                offset: { value:"0", validate:RED.validators.number() },
+                		name: { value:"" },
+                		table: { value:"", required : true },
+                		limit: { value:"0", validate:RED.validators.number() },
+                		offset: { value:"0", validate:RED.validators.number() },
 				columns: { type:"postgresarray"  },
 				where: { type:"postgresarray"  },
 				group: { type:"postgresarray"  },
 				order: { type:"postgresarray"  },
-                requireAll: { value: false },
-                noWhere: { value: false }
+				orderRawActive: { value: false },
+				orderRaw: { value: ""},
+                		requireAll: { value: false },
+                		noWhere: { value: false }
 			},
 			inputs: 1,
 			outputs: 1,
